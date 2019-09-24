@@ -4,9 +4,10 @@
 
 // ?? Document title and notes
 // ~~ Function
-// ^^Requests
+// ^^ Requests
 // !! Errors
 // ## DataBase
+// ** Security
 // todo
 
 
@@ -69,6 +70,7 @@ app.use((req, res, next) => {
 
     // ~~ Check Node Environment for Develpment
     if (process.env.NODE_ENV === 'development') {
+
         // ~~ Log Date to console
         log(chalk.magenta.bold.inverse(`Request Time: ${requestTime}`))
     }

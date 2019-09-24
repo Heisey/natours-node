@@ -8,7 +8,6 @@ const tourController = require('../controllers/tourController')
 // ??????????????????? Node Modules ????????????????????????
 
 // ??????????????????? Vendor Modules ??????????????????????
-
 const express = require('express')
 
 
@@ -18,15 +17,30 @@ const router = express.Router();
 module.exports = router
 
 // ~~ Check for valid ID Middleware
-router.param('id', tourController.checkID)
+// router.param('id', tourController.checkID)
 
-// ~~ Tours Root Route
+// ^^ Top 5 Tours 
+router
+    .route('/top-5-tours')
+    .get(tourController.getTopFive, tourController.getAllTours)
+
+// ^^ Stats for Tours
+router
+    .route('/tour-stats')
+    .get(tourController.getTourStats)
+
+// ^^ Monthly Plan
+router
+    .route('/monthly-plan/:year')
+    .get(tourController.getMonthlyPlan)
+
+// ^^ Tours Root Route
 router
     .route('/')
     .get(tourController.getAllTours) // ^^ Get All Tours
-    .post(tourController.checkBody, tourController.createTour); // ^^ Create Tour
+    .post(tourController.createTour); // ^^ Create Tour
 
-// ~~ Tours ID Route
+// ^^ Tours ID Route
 router
     .route('/:id')
     .get(tourController.getTour) // ^^ Get Tour By Id
