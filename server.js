@@ -25,11 +25,11 @@ const PORT = process.env.PORT;
 const DB = process.env.DB.replace('<PASSWORD>', process.env.DBPASSWORD);
 
 // ~~ Start App Server
-app.listen(PORT, () => {
+server = app.listen(PORT, () => {
 
     // ~~ Check Env to set custom response
     if (process.env.NODE_ENV === 'development') {
-        log(chalk.green.bold.inverse(`<<<<< App is Running on Port ${PORT} >>>>>`));
+        log(chalk.blue.bold.inverse(`<<<<< App is Running on Port ${PORT} >>>>>`));
     } else {
         log(`<<<<< App is Running on Port ${PORT} >>>>>`)
     }
@@ -46,9 +46,27 @@ mongoose.connect(DB, {
 
     // ~~ Check Env to set custom response
     if (process.env.NODE_ENV === 'development') {
-        log(chalk.cyan.bold.inverse('<<<<< DB Connected Successfully >>>>>'))
+        log(chalk.green.bold.inverse('<<<<< DB Connected Successfully >>>>>'))
     } else {
         log('<<<<< DB Connected Successfully >>>>>')
     }
 
+})
+
+// ??????????????????? Global Error Handler ????????????????
+
+process.on('unhandledRejection', (err) => {
+    console.log(err.name, err.message);
+    console.log('Unhandled Rejection!!! Shutting Down...')
+    server.close(() => {
+        process.exit(1);
+    })
+})
+
+process.on('uncaughtException', (err) => {
+    console.log(err.name, err.message);
+    console.log('Uncaught Exception!!! Shutting Down...')
+    server.close(() => {
+        process.exit(1);
+    })
 })

@@ -10,7 +10,6 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose')
 const slugify = require('slugify')
-// const validator = require('validator')
 
 
 const tourSchema = new mongoose.Schema({
@@ -141,7 +140,7 @@ tourSchema.post(/^find/, function (doc, next) {
     if (process.env.NODE_ENV === 'development') {
 
         // ~~ Log Query time to console
-        console.log(chalk.cyan.bold.inverse(`Query took ${Date.now() - this.start} milliseconss`))
+        console.log(chalk.magenta.bold.inverse(`Query took ${Date.now() - this.start} milliseconss`))
     }
 
     // ~~ Next function
@@ -175,7 +174,7 @@ tourSchema.post('aggregate', function () {
     if (process.env.NODE_ENV === 'development') {
 
         // ~~ Log Query time to console
-        console.log(chalk.cyan.bold.inverse(`Query took ${Date.now() - this.start} milliseconss`))
+        console.log(chalk.green.bold.inverse(`Query took ${Date.now() - this.start} milliseconss`))
     }
 })
 
