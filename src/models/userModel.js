@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please provide a email'],
         unique: true,
         lowercase: true,
-        validate: [validator.isEmail, 'please provie a valid email']
+        validate: [validator.isEmail, 'Please provie a valid email']
     },
     photo: {
         type: String
@@ -58,11 +58,17 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'guide', 'lead-guide', 'admin'],
         default: 'user'
+    },
+    active: {
+        type: Boolean,
+        default: true,
+        select: false
     }
 });
 
 // ** Hash Password
 userSchema.pre('save', async function (next) {
+    
     // ## Check to seee if password has been modified
     if (!this.isModified('password')) return next();
 
@@ -75,11 +81,13 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
+// ** Set password save time
 userSchema.pre('save', function (next) {
 
     // ## Check to see if password is modified
     if (!this.isModified('password') || this.isNew) return next()
 
+    // ~~ Set password time change back by 5 seconds
     this.passwordChangedAt = Date.now() - 5000
 
     next()
@@ -87,6 +95,7 @@ userSchema.pre('save', function (next) {
 
 // ** Check password
 userSchema.methods.checkPassword = async function (candidate, actual) {
+    
     const compare = await bcrypt.compare(candidate, actual);
 
     return compare;
@@ -108,6 +117,7 @@ userSchema.methods.changedPasswordAfter = function (timestamp) {
 
 // ** Create reset token for forgotten password
 userSchema.methods.resetToken = function () {
+
     // ** Create reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
 

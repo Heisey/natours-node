@@ -2,6 +2,7 @@
 // ?????????????? Authorization Contorller ?????????????????
 // ?????????????????????????????????????????????????????????
 
+
 // ??????????????????? File Modules ????????????????????????
 // ?? Models
 const User = require('../models/userModel')
@@ -9,6 +10,7 @@ const User = require('../models/userModel')
 // ?? Utilites
 const AppError = require('../utils/AppError')
 const catchAsync = require('../utils/catchAsync')
+const createSendToken = require('../utils/sendToken')
 const sendEmail = require('../utils/email')
 
 // ??????????????????? Node Modules ????????????????????????
@@ -20,13 +22,7 @@ const {
 // ??????????????????? Vendor Modules ??????????????????????
 const jwt = require('jsonwebtoken')
 
-const signToken = id => {
-    return jwt.sign({
-        id
-    }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN
-    })
-}
+
 
 // ~~ Sign Up Users
 exports.signup = catchAsync(async (req, res, next) => {
@@ -41,28 +37,30 @@ exports.signup = catchAsync(async (req, res, next) => {
         role: req.body.role
     })
 
-    // ** Create a JWT token
-    const token = signToken(newUser._id)
+    console.log('hello')
 
-    // ^^ Response
-    res.status(201).json({
-        status: 'success',
-        token,
-        data: {
-            user: newUser
-        }
-    })
+    sendObj = {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+    }
+
+    createSendToken(sendObj, 201, res)
+
 })
 
+// ~~ Login User
 exports.login = catchAsync(async (req, res, next) => {
+
     const {
         email,
         password
     } = req.body;
 
     // ~~ Check for email and password exist
+    // !! Error Handler
     if (!email || !password) {
-        throw new AppError('Please provide email and password', 400)
+        return next(new AppError('Please provide email and password', 400))
     }
 
     // ## Query DB by email to get user
@@ -80,23 +78,19 @@ exports.login = catchAsync(async (req, res, next) => {
 
     // !! Error Handler
     if (!match) {
-        throw new AppError('Incorrect email or password', 401)
+        return new AppError('Incorrect email or password', 401)
     }
 
 
-    // ** Create JWT Token
-    const token = signToken(user._id)
+    createSendToken(user, 200, res)
 
-    // ^^ Response
-    res.status(200).json({
-        status: 'success',
-        token
-    })
 })
 
 // ** Protect tours with JWT
 exports.protect = catchAsync(async (req, res, next) => {
+    console.log('hello1')
     let token;
+    
     // ~~ Check for token
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1]
@@ -165,11 +159,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     try {
 
+        // ^^ Send Reset Email
         await sendEmail({
             email: user.email,
             subject: 'Your password reset token',
             message
         })
+
+        // !! Error Handler
     } catch (err) {
         user.passwordResetToken = undefined
         user.passwordResetExpires = undefined
@@ -180,6 +177,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
         return next(new AppError('There was a problem sending the email', 500))
     }
 
+    // ^^ Response
     res.status(200).json({
         status: 'success',
         message: 'token sent to email'
@@ -187,12 +185,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 })
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-    // 1) Get user based on the token
+    // ** Create Hashed Token
     const hashedToken = crypto
         .createHash('sha256')
         .update(req.params.token)
         .digest('hex');
 
+    // ## Query DB for user
     const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: {
@@ -200,10 +199,12 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
         }
     });
 
-    // 2) If token has not expired, and there is user, set the new password
+    // !! Error Handler
     if (!user) {
         return next(new AppError('Token is invalid or has expired', 400));
     }
+
+    // ## Update user password and Save to DB
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
     user.passwordResetToken = undefined;
@@ -211,11 +212,27 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     await user.save();
 
     // 3) Update changedPasswordAt property for the user
-    // 4) Log the user in, send JWT
-    const token = signToken(user._id)
+    // **Create a Security token
+    //  ^^ Response
+    createSendToken(user, 200, res)
+})
 
-    res.status(200).json({
-        status: 'success',
-        token
-    })
+exports.updatePassword = catchAsync(async (req, res, next) => {
+
+    // ## Query DB by ID
+    const user = await User.findById(req.user.id).select('+password')
+
+    // !! Error Handler
+    if (!(await user.checkPassword(req.body.passwordCurrent, user.password))) {
+        return next(new AppError('Your current password is incorrect', 401))
+    }
+
+    // ## Update user password and Save to DB
+    user.password = req.body.password
+    user.passwordConfirm = req.body.passwordConfirm
+    await user.save()
+
+    // **Create a Security token
+    //  ^^ Response
+    createSendToken(user, 200, res)
 })

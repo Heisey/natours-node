@@ -6,13 +6,25 @@
 // ?? Models
 const User = require('../models/userModel')
 
-// ?? Utilities
+// ?? Utilites
+const AppError = require('../utils/AppError')
 const catchAsync = require('../utils/catchAsync')
 
 // ??????????????????? Node Modules ????????????????????????
 
 // ??????????????????? Vendor Modules ??????????????????????
 
+
+const filterObj = (obj, ...allowedFields) => {
+
+    const newObj = {}
+
+    Object.keys(obj).forEach(el => {
+        if (allowedFields.includes(el)) newObj[el] = obj[el]
+    })
+
+    return newObj
+}
 
 // ~~ Get All Users
 exports.getAllUsers = catchAsync(async (req, res, next) => {
@@ -30,7 +42,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     })
 })
 
-// ~~ Get Tour By ID
+// ~~ Get User By ID
 exports.getUser = async (req, res, next) => {
 
     res.status(200).json({
@@ -41,19 +53,53 @@ exports.getUser = async (req, res, next) => {
     })
 }
 
-// ~~ Create Tour
+// ~~ Create User
 exports.createUser = (req, res, next) => {
     // todo
     res.status(500).send()
 }
 
-// ~~ Update Tour
+// ~~ Update User
+exports.updateMe = catchAsync(async (req, res, next) => {
+
+    // !! Error Handler
+    if (req.body.password || req.body.passwordConfirm) {
+        return next(new AppError('Sorry Cannot update password from here', 400))
+    }
+
+    const updates = filterObj(req.body, 'name', 'email')
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, {
+        new: true,
+        runValidators: true
+    })
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            user
+        }
+    })
+})
+
+// ~~ Update User (admin)
 exports.updateUser = (req, res, next) => {
     // todo
     res.status(500).send()
 }
 
-// ~~ Delete Tour
+exports.deleteMe = catchAsync(async (req, res, next) => {
+    await User.findByIdAndUpdate(req.user.id, {
+        active: false
+    })
+
+    res.status(201).json({
+        status: 'success',
+        data: null
+    })
+})
+
+// ~~ Delete User (admin)
 exports.deleteUser = (req, res, next) => {
     // todo
     res.status(500).send()

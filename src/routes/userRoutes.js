@@ -17,22 +17,41 @@ const express = require('express');
 const router = express.Router();
 module.exports = router
 
+// ~~ Signup new user
 router
     .route('/signup')
     .post(authController.signup)
 
+// ~~ Login user
 router
     .route('/login')
     .post(authController.login)
 
+// ~~ Forgot Password
 router
     .route('/forgotPassword')
     .post(authController.forgotPassword)
 
+// ~~ Reset Password
 router
     .route('/resetPassword/:token')
     .patch(authController.resetPassword)
 
+// ~~ Update Password
+router
+    .route('/updatePassword')
+    .patch(authController.protect, authController.updatePassword)
+
+
+// ~~ Update user info
+router
+    .route('/updateMe')
+    .patch(authController.protect, userController.updateMe)
+
+router
+    .route('/deleteMe')
+    .delete(authController.protect, userController.deleteMe)
+    
 // ~~ User Root Route
 router
     .route('/')
