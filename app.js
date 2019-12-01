@@ -38,7 +38,10 @@ const path = require('path');
 const chalk = require('chalk');
 const express = require('express');
 const helmet = require('helmet');
+const hpp = require('hpp')
+const mongoSanitize = require('express-mongo-sanitize')
 const rateLimit = require('express-rate-limit')
+const xss = require('xss-clean')
 
 // ?????????????????????????????????????????????????????????
 // ??????????????????? Application ?????????????????????????
@@ -64,12 +67,24 @@ const limiter = rateLimit({
     message: "too many request from this IP, please try again in 24 Hours"
 })
 
-// ~~ Set Global MiddleWare
-app.use(express.json());
-app.use(express.urlencoded());
-
 // ~~ Set Route Middleware
 app.use('/api', limiter)
+
+// ~~ Set Global MiddleWare
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded());
+app.use(mongoSanitize())
+app.use(xss())
+app.use(hpp({
+    whitelist: [
+        'duration',
+        'ratingsQuantity',
+        'ratingAverage',
+        'maxGroupSize',
+        'difficulty',
+        'price'
+    ]
+}))
 
 // ~~ Import public directory
 app.use(express.static(path.join(__dirname, '/public')))
