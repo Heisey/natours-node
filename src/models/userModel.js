@@ -87,9 +87,15 @@ userSchema.pre('save', function (next) {
     // ## Check to see if password is modified
     if (!this.isModified('password') || this.isNew) return next()
 
-    // ~~ Set password time change back by 5 seconds
-    this.passwordChangedAt = Date.now() - 5000
+    // ~~ Set password time change back by 10 seconds
+    this.passwordChangedAt = Date.now() - 10000
 
+    next()
+})
+
+// ~~ Filter out unactive users
+userSchema.pre(/^find/, function(next) {
+    this.find({active: { $ne: false }});
     next()
 })
 
@@ -121,12 +127,16 @@ userSchema.methods.resetToken = function () {
     // ** Create reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
 
+    // ** Encrypt reset Token
     this.passwordResetToken = crypto
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
+
+    // ** Set expire time for reset token ( 10 mins )
     this.passwordResetExpires = Date.now() + (10 * 60 * 1000);
 
+    // ~~ return unecrypted reset token
     return resetToken;
 };
 

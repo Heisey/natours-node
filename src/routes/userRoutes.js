@@ -48,6 +48,7 @@ router
     .route('/updateMe')
     .patch(authController.protect, userController.updateMe)
 
+// ~~ Delete User
 router
     .route('/deleteMe')
     .delete(authController.protect, userController.deleteMe)

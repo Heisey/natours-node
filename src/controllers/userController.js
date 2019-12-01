@@ -67,13 +67,16 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         return next(new AppError('Sorry Cannot update password from here', 400))
     }
 
+    // ~~ filter fields to only name and email 
     const updates = filterObj(req.body, 'name', 'email')
 
+    // ## Query DB by ID and update user
     const user = await User.findByIdAndUpdate(req.user.id, updates, {
         new: true,
         runValidators: true
     })
 
+    // ^^ Response
     res.status(200).json({
         status: 'success',
         data: {
@@ -88,12 +91,16 @@ exports.updateUser = (req, res, next) => {
     res.status(500).send()
 }
 
+// ~~ Delete User 
 exports.deleteMe = catchAsync(async (req, res, next) => {
+
+    // ## Query DB and set active status to false
     await User.findByIdAndUpdate(req.user.id, {
         active: false
     })
 
-    res.status(201).json({
+    // ^^ Response
+    res.status(204).json({
         status: 'success',
         data: null
     })

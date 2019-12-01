@@ -37,8 +37,6 @@ exports.signup = catchAsync(async (req, res, next) => {
         role: req.body.role
     })
 
-    console.log('hello')
-
     sendObj = {
         _id: newUser._id,
         name: newUser.name,
@@ -88,7 +86,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
 // ** Protect tours with JWT
 exports.protect = catchAsync(async (req, res, next) => {
-    console.log('hello1')
+
     let token;
     
     // ~~ Check for token
@@ -133,6 +131,7 @@ exports.restrictTo = (...roles) => {
     }
 }
 
+// ~~ Forgot Password email Handler
 exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     // ## Query DB for user
@@ -147,15 +146,16 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     // ** Generate Token
     const resetToken = user.resetToken()
-    console.log(resetToken)
+
+    // ## update user in DB
     await user.save({
         validateBeforeSave: false
     })
 
 
-    // ^^ Send response to email
+    // ~~ Set reset url and email message
     const resetURL = `${req.protocol}://${req.get('host')}/api/users/resetPassword/${resetToken}`
-    const message = `forgot your password submit a ptach request with your new password and passwordConfirm to ${resetURL}`
+    const message = `forgot your password submit a patch request with your new password and passwordConfirm to ${resetURL}`
 
     try {
 
@@ -184,7 +184,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     })
 })
 
+// ~~ Reset Password Handler
 exports.resetPassword = catchAsync(async (req, res, next) => {
+
     // ** Create Hashed Token
     const hashedToken = crypto
         .createHash('sha256')
@@ -211,12 +213,12 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save();
 
-    // 3) Update changedPasswordAt property for the user
     // **Create a Security token
     //  ^^ Response
     createSendToken(user, 200, res)
 })
 
+// ~~ Udate Password Handler
 exports.updatePassword = catchAsync(async (req, res, next) => {
 
     // ## Query DB by ID
