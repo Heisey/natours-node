@@ -83,6 +83,35 @@ const tourSchema = new mongoose.Schema({
     },
     startDates: [Date],
     slug: String,
+    startLocation: {
+        type: {
+            type: String,
+            default: 'Point',
+            enum: ['Point']
+        },
+        coordinates: [Number],
+        address: String,
+        description: String
+    },
+    locations: [
+        {
+            type: {
+                type: String,
+                default: "Point",
+                enum: ['Point']
+            },
+            coordinates: [Number],
+            address: String,
+            description: String,
+            day: Number
+        },
+    ],
+    guides: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'User'
+        }
+    ],
     secretTour: {
         type: Boolean,
         default: false
@@ -100,6 +129,13 @@ const tourSchema = new mongoose.Schema({
 tourSchema.virtual('durationWeeks').get(function () {
     return Math.ceil(this.duration / 7);
 })
+
+// ## Populate Reviews with virtual properties
+tourSchema.virtual('reviews', {
+    ref: 'Review',
+    foreignField: 'tour',
+    localField: '_id'
+});
 
 // ## Hook before save() and create()
 // ## Set slug
@@ -128,7 +164,16 @@ tourSchema.pre(/^find/, function (next) {
         }
     })
 
-    // ~~ Call next 
+    next()
+})
+
+// ## populate guides in tours
+tourSchema.pre(/^find/, function(next) {
+    this.populate({
+        path: 'guides',
+        select: '-__v -email -passwordChangedAt'
+    })
+
     next()
 })
 
@@ -146,6 +191,8 @@ tourSchema.post(/^find/, function (doc, next) {
     // ~~ Next function
     next()
 })
+
+
 
 // ## Hook before aggregate()
 tourSchema.pre('aggregate', function (next) {

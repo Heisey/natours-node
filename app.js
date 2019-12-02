@@ -26,6 +26,7 @@ const globalErrorHandler = require('./src/controllers/errorController')
 // ?? Router Imports
 const tourRouter = require('./src/routes/tourRoutes')
 const userRouter = require('./src/routes/userRoutes')
+const reviewRouter = require('./src/routes/reviewRoutes')
 
 // ?? Utility Imports
 const AppError = require('./src/utils/appError')
@@ -114,6 +115,7 @@ app.use((req, res, next) => {
 // ~~ Attatch Routers to their paths
 app.use('/api/tours', tourRouter)
 app.use('/api/users', userRouter)
+app.use('/api/reviews', reviewRouter)
 
 // ^^ All Wrong routes
 // !! Error Handler

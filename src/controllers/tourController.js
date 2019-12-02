@@ -58,12 +58,12 @@ exports.getTopFive = (req, res, next) => {
 // ~~ Get Tour By ID
 exports.getTour = catchAsync(async (req, res, next) => {
 
-    // ~~ Convert param.id to Number
+    // ~~ param id
     const id = req.params.id;
 
 
     // ## Query DB by ID for Tour
-    const tour = await Tour.findById(id);
+    const tour = await Tour.findById(id).populate('reviews');
 
     // !! Error Handler
     if (!tour) {
@@ -88,7 +88,7 @@ exports.createTour = catchAsync(async (req, res, next) => {
     const newTour = await Tour.create(req.body);
 
     // ## Save Tour to DB
-    newTour.save();
+    await newTour.save();
 
     // ^^ Response
     res.status(201).send({
