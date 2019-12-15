@@ -17,6 +17,8 @@ const express = require('express');
 const router = express.Router();
 module.exports = router
 
+// ^^^^^^^^^^^^^^^^^ Unprotected Routes ^^^^^^^^^^^^^^^^^^^
+
 // ~~ Signup new user
 router
     .route('/signup')
@@ -37,31 +39,49 @@ router
     .route('/resetPassword/:token')
     .patch(authController.resetPassword)
 
+
+// ^^^^^^^^^^^^^^^^^ Protected Routes ^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^ Admin Protected Routes ^^^^^^^^^^^^^^^^^^
+
+// ^^ Set protection middleware
+router.use(authController.protect)
+
+// ~~ User profile 
+router
+    .route('/me')
+    .get(userController.getMe, userController.getUser)
+
 // ~~ Update Password
 router
     .route('/updatePassword')
-    .patch(authController.protect, authController.updatePassword)
+    .patch(authController.updatePassword)
 
 
 // ~~ Update user info
 router
     .route('/updateMe')
-    .patch(authController.protect, userController.updateMe)
+    .patch(userController.updateMe)
 
 // ~~ Delete User
 router
     .route('/deleteMe')
-    .delete(authController.protect, userController.deleteMe)
+    .delete(userController.deleteMe)
+
+// ^^^^^^^^^^^^^^ Admin Protected Routes ^^^^^^^^^^^^^^^^^^
+
+// ^^ Set admin authoriztion middleware
+router.use(authController.restrictTo('admin'))
     
 // ~~ User Root Route
 router
     .route('/')
-    .get(userController.getAllUsers) // ^^ Get All Users
-    .post(userController.createUser) // ^^ Create User
+    .get(userController.getAllUsers)
+    .post(userController.createUser)
 
 // ~~ User ID Route
+// WARNING ***** Do not use update route for password *****
 router
     .route('/:id')
-    .get(userController.getUser) // ^^ Get User By Id
-    .patch(userController.updateUser) // ^^ Update User By id
-    .delete(userController.deleteUser) // ^^ Delete User By id
+    .get(userController.getUser)
+    .patch(userController.updateUser)
+    .delete(userController.deleteUser)

@@ -3,12 +3,11 @@
 // ?????????????????????????????????????????????????????????
 
 // ??????????????????? File Modules ????????????????????????
-// ?? Utilites
-const AppError = require('../utils/appError')
-const catchAsync = require('../utils/catchAsync')
-
 // ?? Model
 const Review = require('../models/reviewModel');
+
+// ?? Utilites
+const factory = require('../utils/factoryHandler')
 
 // ??????????????????? Node Modules ????????????????????????
 
@@ -18,62 +17,28 @@ const Review = require('../models/reviewModel');
 
 // ??????????????????? route Handlers ??????????????????????
 
+exports.setTourUserId = (req, res, next) => {
+
+    // ~~ Check for tour id
+    if (!req.body.tour) req.body.tour = req.params.id
+
+    // ~~ Check for user id
+    if (!req.body.user) req.body.user = req.user.id
+
+    next()
+}
+
 // ~~ Create Review
-exports.createReview = catchAsync(async (req, res, next) => {
-    
-    // ## Create Review Model Instance
-    const newReview = await Review.create(req.body);
-
-    // ## Save Review to DB
-    await newReview.save();
-
-    // ^^ Response
-    res.status(201).json({
-        status: 'success',
-        requestTime: req.requestTime,
-        data: {
-            review: newReview
-        }
-    })
-})
+exports.createReview = factory.createOne(Review)
 
 // ~~ Get all reviews
-exports.getAllReviews = catchAsync(async (req, res, next) => {
-
-    // ## Query DB for reviews
-    const reviews = await Review.find()
-
-    // ^^ Response
-    res.status(200).json({
-        status: 'success',
-        requestTime: req.requestTime,
-        results: reviews.length,
-        data: {
-            reviews
-        }
-    })
-})
+exports.getAllReviews = factory.getAll(Review)
 
 // ~~ Get Review by ID
-exports.getReview = catchAsync(async (req, res, next) => {
+exports.getReview = factory.getOne(Review, null)
 
-    // ~~ param id
-    const id = req.param.id;
+// ~~ Update Review
+exports.updateReview = factory.updateOne(Review)
 
-    // ## Query DB for Review
-    const review = await Review.findById(id);
-
-    // !! Error Handler
-    if (!review) {
-        return next(new AppError('No review found', 404))
-    }
-
-    // ^^ Response
-    res.status(200).json({
-        status: 'success',
-        requestTime: req.requestTime,
-        data: {
-            review
-        }
-    })
-})
+// ~~ Delete Tour
+exports.deleteReview = factory.deleteOne(Review)

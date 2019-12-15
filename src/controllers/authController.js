@@ -22,8 +22,6 @@ const {
 // ??????????????????? Vendor Modules ??????????????????????
 const jwt = require('jsonwebtoken')
 
-
-
 // ~~ Sign Up Users
 exports.signup = catchAsync(async (req, res, next) => {
 
@@ -130,6 +128,26 @@ exports.restrictTo = (...roles) => {
         next()
     }
 }
+
+// ** protect author review paths
+exports.checkIfAuthor = catchAsync(async (req, res, next) => {
+
+    // ## Query DB for review
+    const review = await Review.findById(req.params.id);
+    
+    // ** check for role permisiion
+    if (req.user.role !== 'admin') {
+        
+        // ** Check user id
+        if (review.user.id !== req.user.id) {
+
+            // !! Error Handler
+            return next(new AppError(`You cannot edit someone's else review.`, 401));
+        }
+    }
+
+    next();
+  });
 
 // ~~ Forgot Password email Handler
 exports.forgotPassword = catchAsync(async (req, res, next) => {

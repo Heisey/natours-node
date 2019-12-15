@@ -9,6 +9,7 @@ const User = require('../models/userModel')
 // ?? Utilites
 const AppError = require('../utils/AppError')
 const catchAsync = require('../utils/catchAsync')
+const factory = require('../utils/factoryHandler')
 
 // ??????????????????? Node Modules ????????????????????????
 
@@ -27,36 +28,27 @@ const filterObj = (obj, ...allowedFields) => {
 }
 
 // ~~ Get All Users
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-
-    // ## Query DB for all users
-    const users = await User.find()
-
-    // ^^ Response
-    res.status(200).json({
-        status: 'success',
-        results: users.length,
-        data: {
-            users
-        }
-    })
-})
+exports.getAllUsers = factory.getAll(User)
 
 // ~~ Get User By ID
-exports.getUser = async (req, res, next) => {
+exports.getUser = factory.getOne(User, null)
 
-    res.status(200).json({
-        status: 'success',
-        data: {
-            user
-        }
-    })
+// ~~ Get user info (user endpoint)
+exports.getMe = (req, res, next) => {
+
+    // ~~ Set param id to user id
+    req.params.id = req.user.id
+    
+    next()
 }
 
 // ~~ Create User
 exports.createUser = (req, res, next) => {
-    // todo
-    res.status(500).send()
+
+    res.status(500).json({
+        status: "error",
+        message: "This route is not defined! Please use /signup instead"
+    })
 }
 
 // ~~ Update User
@@ -86,10 +78,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 })
 
 // ~~ Update User (admin)
-exports.updateUser = (req, res, next) => {
-    // todo
-    res.status(500).send()
-}
+// WARNING ***** Do not use update route for password *****
+exports.updateUser = factory.updateOne(User)
 
 // ~~ Delete User 
 exports.deleteMe = catchAsync(async (req, res, next) => {
@@ -106,8 +96,5 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     })
 })
 
-// ~~ Delete User (admin)
-exports.deleteUser = (req, res, next) => {
-    // todo
-    res.status(500).send()
-}
+// ~~ Delete User by ID
+exports.deleteUser = factory.deleteOne(User)

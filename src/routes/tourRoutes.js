@@ -3,8 +3,12 @@
 // ?????????????????????????????????????????????????????????
 
 // ??????????????????? File Modules ????????????????????????
+// ?? Controllers
 const authController = require('../controllers/authController')
 const tourController = require('../controllers/tourController')
+
+// ?? Routers
+const reviewRouter = require('../routes/reviewRoutes')
 
 // ??????????????????? Node Modules ????????????????????????
 
@@ -17,30 +21,35 @@ const express = require('express')
 const router = express.Router();
 module.exports = router;
 
-// ^^ Top 5 Tours 
+// ~~ nesting review router
+router.use('/:id/reviews', reviewRouter)
+
+// ~~ Top 5 Tours 
 router
     .route('/top-5-tours')
     .get(tourController.getTopFive, tourController.getAllTours)
 
-// ^^ Stats for Tours
+// ~~ Stats for Tours
 router
     .route('/tour-stats')
     .get(tourController.getTourStats)
 
-// ^^ Monthly Plan
+// ~~ Monthly Plan
 router
     .route('/monthly-plan/:year')
-    .get(tourController.getMonthlyPlan)
+    .get(authController.protect, authController.restrictTo('admin', 'lead-guide', 'guide'), tourController.getMonthlyPlan)
 
-// ^^ Tours Root Route
+// ~~ Tours Root Route
 router
     .route('/')
-    .get(authController.protect, tourController.getAllTours) // ^^ Get All Tours
-    .post(tourController.createTour); // ^^ Create Tour
+    .get(tourController.getAllTours) // ^^ Get All Tours
+    .post(authController.protect, authController.restrictTo('admin', 'lead-guide'), tourController.createTour); // ^^ Create Tour
 
-// ^^ Tours ID Route
+// ~~ Tours ID Route
 router
     .route('/:id')
     .get(tourController.getTour) // ^^ Get Tour By Id
-    .patch(tourController.updateTour) // ^^ Update Tour By id
+    .patch(authController.protect, authController.restrictTo('admin', 'lead-guide'), tourController.updateTour) // ^^ Update Tour By id
     .delete(authController.protect, authController.restrictTo('admin', 'lead-guide'), tourController.deleteTour); // ^^ Delete Tour By id
+
+
