@@ -40,9 +40,9 @@ const tourSchema = new mongoose.Schema({
     },
     ratingAverage: {
         type: Number,
-        default: 3.5,
         min: [1, 'A rating must be 1 or greater'],
-        max: [5, 'A rating must be 5 or less']
+        max: [5, 'A rating must be 5 or less'],
+        set: val => Math.round(val * 10) / 10
     },
     ratingsQuantity: {
         type: Number,
@@ -125,6 +125,11 @@ const tourSchema = new mongoose.Schema({
     }
 })
 
+// ## Set Indexes
+tourSchema.index({ price: 1, ratingAverage: -1 })
+tourSchema.index({ slug: 1 })
+tourSchema.index({ startLocation: '2dsphere' })
+
 // ## Set Virtual Properties
 tourSchema.virtual('durationWeeks').get(function () {
     return Math.ceil(this.duration / 7);
@@ -194,24 +199,24 @@ tourSchema.post(/^find/, function (doc, next) {
 
 
 
-// ## Hook before aggregate()
-tourSchema.pre('aggregate', function (next) {
+// // ## Hook before aggregate()
+// tourSchema.pre('aggregate', function (next) {
 
-    // ~~ query start time
-    this.start = Date.now();
+//     // ~~ query start time
+//     this.start = Date.now();
 
-    // ## Remove secret tours from aggregation
-    this.pipeline().unshift({
-        $match: {
-            secretTour: {
-                $ne: true
-            }
-        }
-    })
+//     // ## Remove secret tours from aggregation
+//     this.pipeline().unshift({
+//         $match: {
+//             secretTour: {
+//                 $ne: true
+//             }
+//         }
+//     })
 
-    // ~~ Call next 
-    next()
-})
+//     // ~~ Call next 
+//     next()
+// })
 
 // ## Hook after aggregate()
 // ~~ Log query time to console

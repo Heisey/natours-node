@@ -3,7 +3,7 @@
 // ?????????????????????????????????????????????????????????
 
 // ??????????????????? File Modules ????????????????????????
-
+const Tour = require('./tourModel')
 // ??????????????????? Node Modules ????????????????????????
 
 // ??????????????????? Vendor Modules ??????????????????????
@@ -46,6 +46,8 @@ const reviewSchema = new mongoose.Schema({
     }
 })
 
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true })
+
 // ## Hook before find()
 // ## populate user in review
 reviewSchema.pre(/^find/, function(next) {
@@ -57,6 +59,58 @@ reviewSchema.pre(/^find/, function(next) {
     next()
 })
 
+// ## Update average ratings
+reviewSchema.pre(/^findOneAnd/, async function(next) {
+
+    this.r = await this.fineOne()
+
+    next()
+})
+
+// ## static methods
+// ## Calc average rating handler
+reviewSchema.statics.calcAverageRatings = async function(tourId) {
+    const stats = await this.aggregate([
+        {
+            $match: { tour: tourId }
+        },
+        {
+            $group: {
+                _id: '$tour',
+                nRating: { $sum: 1 },
+                avgRating: { $avg: '$rating' }
+            }
+        }
+    ])
+
+    if (stats.length === 0) {
+        await Tour.findByIdAndUpdate(tourId, {
+            ratingsQuantity: 0,
+            ratingAverage: 4.5
+        })
+    }
+
+    await Tour.findByIdAndUpdate(tourId, {
+        ratingsQuantity: stats[0].nRating,
+        ratingAverage: stats[0].avgRating
+    })
+} 
+
+// ## Hook post find
+// ## Update average ratings
+reviewSchema.post(/^findOneAnd/, async function() {
+
+    await this.r.constructor.calcAverageRatings(this.r.tour)
+})
+
+// ## Hook post save()
+// ~~ Calc Average Ratings
+reviewSchema.post('save', function() {
+    
+    // ~~ Call calcAverageRatings on tour
+    this.constructor.calcAverageRatings(this.tour)
+
+})
 
 const Review = mongoose.model('Review', reviewSchema)
 

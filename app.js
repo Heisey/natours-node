@@ -51,6 +51,15 @@ const xss = require('xss-clean')
 // ~~ Start App
 const app = express();
 
+// ~~ Set template engine
+app.set('view engine', 'pug')
+
+// ~~ Import templates
+app.set('views', path.join(__dirname, 'src/views'))
+
+// ~~ Import public directory
+app.use(express.static(path.join(__dirname, '/public')))
+
 // ~~ Set Helmet
 app.use(helmet());
 
@@ -87,9 +96,6 @@ app.use(hpp({
     ]
 }))
 
-// ~~ Import public directory
-app.use(express.static(path.join(__dirname, '/public')))
-
 // ~~ Set Request Time to request obj
 app.use((req, res, next) => {
 
@@ -111,8 +117,12 @@ app.use((req, res, next) => {
 
 // ??????????????????? Routes ??????????????????????????????
 
+// ~~ Attatch template to paths
+app.use('/', (req, res, next) => {
+    res.status(200).render('base')
+}) 
 
-// ~~ Attatch Routers to their paths
+// ~~ Attatch API Routes to their paths
 app.use('/api/tours', tourRouter)
 app.use('/api/users', userRouter)
 app.use('/api/reviews', reviewRouter)

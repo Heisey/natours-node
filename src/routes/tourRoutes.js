@@ -39,6 +39,14 @@ router
     .route('/monthly-plan/:year')
     .get(authController.protect, authController.restrictTo('admin', 'lead-guide', 'guide'), tourController.getMonthlyPlan)
 
+router
+    .route('/tour-from-me/:distance/origin/:coordinates/unit/:unit')
+    .get(tourController.getTourFromMe)
+
+    router
+    .route('/tour-distances/origin/:coordinates/unit/:unit')
+    .get(tourController.getDistances)
+
 // ~~ Tours Root Route
 router
     .route('/')

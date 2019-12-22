@@ -4,6 +4,7 @@
 
 // ??????????????????? File Modules ????????????????????????
 // ?? Utilites
+const AppError = require('../utils/AppError')
 const catchAsync = require('../utils/catchAsync')
 const factory = require('../utils/factoryHandler')
 
@@ -163,4 +164,101 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
             plan
         }
     });
+})
+
+// ~~ Get Tours from you location
+exports.getTourFromMe = catchAsync(async (req, res, next) => {
+
+    // ~~ get variable from parms
+    const { distance, coordinates, unit } = req.params
+
+    // !! Error Handlers
+    if (!distance) {
+        return next(new AppError('Please provide a distance', 400))
+    }
+
+    if (!coordinates) {
+        return next(new AppError('Please provide coordianates', 400))
+    }
+
+    if (!unit) {
+        return next(new AppError('Please select mi or km'))
+    }
+
+    // ~~ get latitude and longitude
+    const [lat, long] = coordinates.split(',')
+
+    // ~~ Calculate radius for geospatial query
+    const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1
+
+    // !! Error Handler
+    if (!lat || !long) {
+        return next(new AppError('Please provide your location in longitude, latitude', 400))
+    }
+
+    // ## Query DB for tours
+    const data = await Tour.find({
+        startLocation: {
+            $geoWithin: {
+                $centerSphere: [[ long, lat ], radius ]
+            } 
+        }
+    })
+
+    // ^^ Response
+    res.status(200).json({
+        status: "success",
+        results: data.length,
+        data
+    })
+})
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+
+    // ~~ get variable from parms
+    const { coordinates, unit } = req.params
+
+    // !! Error Handlers
+    if (!coordinates) {
+        return next(new AppError('Please provide coordianates', 400))
+    }
+
+    if (!unit) {
+        return next(new AppError('Please select mi or km'))
+    }
+
+    // ~~ get latitude and longitude
+    const [lat, long] = coordinates.split(',')
+
+    // ~~ Set unit multiplier
+    const multiplier = unit === 'mi' ? 0.000621371 : 0.001
+
+    // !! Error Handler
+    if (!lat || !long) {
+        return next(new AppError('Please provide your location in longitude, latitude', 400))
+    }
+
+    const data = await Tour.aggregate([
+        {
+            $geoNear: {
+                near: {
+                    type: 'Point',
+                    coordinates: [long * 1, lat * 1]
+                },
+                distanceField: 'distance',
+                distanceMultiplier: multiplier
+            }
+        }, {
+            $project: {
+                distance: 1,
+                name: 1
+            }
+        }
+    ])
+
+    // ^^ Response
+    res.status(200).json({
+        status: "success",
+        data
+    })
 })
